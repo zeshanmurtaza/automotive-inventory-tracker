@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The SQL — How it works</title>
+<style>
+  :root{--navy:#1F3A5F;--accent:#2E6DA4;--purp:#6A3FA0;--ink:#1B2733;--muted:#5b6776;--line:#E4E8EF;--grey:#F4F6FA;}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:#F7F9FC;line-height:1.6}
+  nav{background:var(--navy);padding:12px 22px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  nav a{color:#cfe0f2;text-decoration:none;font-size:13px;font-weight:600;padding:7px 12px;border-radius:8px}
+  nav a.here{background:var(--purp);color:#fff}
+  nav a:hover{background:rgba(255,255,255,.12);color:#fff}
+  nav .sp{flex:1}
+  .hero{background:linear-gradient(120deg,#3b1d63,#6A3FA0);color:#fff;padding:34px 22px}
+  .hero .w{max-width:860px;margin:0 auto}
+  .hero h1{margin:0 0 8px;font-size:27px}
+  .hero p{margin:0;color:#e6dbf3;font-size:15px}
+  .w{max-width:860px;margin:0 auto;padding:26px 22px}
+  h2{color:var(--navy);font-size:19px;margin:30px 0 10px;border-bottom:2px solid var(--line);padding-bottom:6px}
+  .lead{font-size:16px}
+  table{width:100%;border-collapse:collapse;margin:12px 0;background:#fff;font-size:14px}
+  th,td{border:1px solid var(--line);padding:8px 10px;text-align:left}
+  th{background:var(--navy);color:#fff;font-size:12px}
+  pre{background:#0f1c2e;color:#e6edf3;padding:14px 16px;border-radius:10px;overflow:auto;font-size:13px;line-height:1.5}
+  pre .k{color:#7ee0c0}.pre2{color:#ffd479}
+  code{background:#eef2f7;padding:2px 6px;border-radius:5px;font-size:13px}
+  .tags{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+  .tag{background:#EDE4F7;color:#3b1d63;border-radius:99px;padding:5px 12px;font-size:13px;font-weight:700}
+  .callout{background:#F1ECF8;border-left:4px solid var(--purp);border-radius:8px;padding:14px 16px;margin:14px 0}
+  footer{color:var(--muted);font-size:13px;text-align:center;padding:26px}
+  b{color:var(--navy)}
+</style></head>
+<body>
+<nav>
+  <a href="index.html">▶ Live Dashboard</a>
+  <a href="explainer-website.html">The Website</a>
+  <a href="explainer-excel.html">The Excel</a>
+  <a class="here" href="explainer-sql.html">The SQL</a>
+  <span class="sp"></span>
+  <a href="../README.md">Project README</a>
+</nav>
+
+<div class="hero"><div class="w">
+  <h1>🗄️ The SQL Database</h1>
+  <p>A relational database modeling the business, with 21 analytical queries answering real questions.</p>
+</div></div>
+
+<div class="w">
+  <p class="lead">The same data also lives in a <b>SQLite database</b>. This is the part that shows
+  real data skills: a designed schema, two related tables, and a library of queries that turn rows
+  into insight. Everything is plain text you can read in the <code>sql/</code> folder.</p>
+
+  <h2>The design (two related tables)</h2>
+  <table>
+    <tr><th>Table</th><th>Holds</th></tr>
+    <tr><td><b>vehicles</b></td><td>One row per bike/car: make, model, year, buy/sell price, profit, dates, status, buyer.</td></tr>
+    <tr><td><b>partners</b></td><td>One row per partner per vehicle: who, how much cash, what labor — linked back to a vehicle by id.</td></tr>
+  </table>
+  <p>This one-to-many link (a vehicle can have several partners) is what lets the queries split
+  contributions by person using a <code>JOIN</code>.</p>
+
+  <h2>What the 21 queries answer</h2>
+  <table>
+    <tr><th>Theme</th><th>Examples</th></tr>
+    <tr><td>Headline KPIs</td><td>Total profit, ROI on cost, average days to sell</td></tr>
+    <tr><td>Trends</td><td>Profit by month, by make, by model</td></tr>
+    <tr><td>Operations</td><td>Inventory aging, speed-vs-profit, top &amp; bottom flips</td></tr>
+    <tr><td>Partners</td><td>Cash contributed per partner (via JOIN)</td></tr>
+  </table>
+
+  <h2>A sample query</h2>
+  <pre><span class="k">SELECT</span> make || ' ' || model <span class="k">AS</span> model_name,
+       <span class="k">COUNT</span>(*)            <span class="k">AS</span> times_sold,
+       <span class="k">ROUND</span>(<span class="k">AVG</span>(days_to_sell),1) <span class="k">AS</span> avg_days,
+       <span class="k">ROUND</span>(<span class="k">AVG</span>(profit))        <span class="k">AS</span> avg_profit
+<span class="k">FROM</span> vehicles
+<span class="k">WHERE</span> status = 'Sold'
+<span class="k">GROUP BY</span> model_name
+<span class="k">ORDER BY</span> times_sold <span class="k">DESC</span>, avg_days <span class="k">ASC</span>;</pre>
+  <p style="color:var(--muted);font-size:14px">→ Result: the <b>Kawasaki Ninja 400</b> is the best mover — 6 sold, ~11 days each.</p>
+
+  <h2>Techniques used</h2>
+  <div class="tags">
+    <span class="tag">Schema design + constraints</span><span class="tag">Indexes</span>
+    <span class="tag">GROUP BY / HAVING</span><span class="tag">JOINs</span>
+    <span class="tag">Window functions</span><span class="tag">Views</span><span class="tag">Subqueries</span>
+  </div>
+
+  <div class="callout">
+    <b>Run it yourself:</b> open <code>sql/automotive_inventory.db</code> in the free
+    <b>DB Browser for SQLite</b>, paste any block from <code>sql/03_queries.sql</code>, and hit run.
+    Or rebuild the whole database from the text files <code>01_schema.sql</code> + <code>02_seed_data.sql</code>.
+  </div>
+</div>
+
+<footer>Automotive Inventory Dashboard · built by Zeshan Murtaza</footer>
+</body></html>

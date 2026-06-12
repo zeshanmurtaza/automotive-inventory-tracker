@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Web Dashboard — How it works</title>
+<style>
+  :root{--navy:#1F3A5F;--accent:#2E6DA4;--teal:#0F7B6C;--ink:#1B2733;--muted:#5b6776;--line:#E4E8EF;--grey:#F4F6FA;}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:#F7F9FC;line-height:1.6}
+  nav{background:var(--navy);padding:12px 22px;display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+  nav a{color:#cfe0f2;text-decoration:none;font-size:13px;font-weight:600;padding:7px 12px;border-radius:8px}
+  nav a.here{background:var(--accent);color:#fff}
+  nav a:hover{background:rgba(255,255,255,.12);color:#fff}
+  nav .sp{flex:1}
+  .hero{background:linear-gradient(120deg,#16263f,#2E6DA4);color:#fff;padding:34px 22px}
+  .hero .w{max-width:860px;margin:0 auto}
+  .hero h1{margin:0 0 8px;font-size:27px}
+  .hero p{margin:0;color:#d6e4f5;font-size:15px}
+  .w{max-width:860px;margin:0 auto;padding:26px 22px}
+  h2{color:var(--navy);font-size:19px;margin:30px 0 10px;border-bottom:2px solid var(--line);padding-bottom:6px}
+  .lead{font-size:16px}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:14px;margin:14px 0}
+  .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px;box-shadow:0 1px 3px rgba(16,24,40,.05)}
+  .card h3{margin:0 0 6px;font-size:15px;color:var(--accent)}
+  .card p{margin:0;font-size:14px;color:var(--muted)}
+  .steps{counter-reset:s;padding:0;list-style:none;margin:10px 0}
+  .steps li{position:relative;padding:12px 14px 12px 52px;background:#fff;border:1px solid var(--line);border-radius:10px;margin-bottom:10px}
+  .steps li:before{counter-increment:s;content:counter(s);position:absolute;left:12px;top:12px;width:28px;height:28px;background:var(--accent);color:#fff;border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:800}
+  .tags{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}
+  .tag{background:#E3EEFB;color:var(--navy);border-radius:99px;padding:5px 12px;font-size:13px;font-weight:700}
+  .callout{background:#EAF6F1;border-left:4px solid var(--teal);border-radius:8px;padding:14px 16px;margin:14px 0}
+  .cta{display:inline-block;background:var(--accent);color:#fff;text-decoration:none;font-weight:700;padding:11px 18px;border-radius:10px;margin-top:8px}
+  footer{color:var(--muted);font-size:13px;text-align:center;padding:26px}
+  b{color:var(--navy)}
+</style></head>
+<body>
+<nav>
+  <a href="index.html">▶ Live Dashboard</a>
+  <a class="here" href="explainer-website.html">The Website</a>
+  <a href="explainer-excel.html">The Excel</a>
+  <a href="explainer-sql.html">The SQL</a>
+  <span class="sp"></span>
+  <a href="../README.md">Project README</a>
+</nav>
+
+<div class="hero"><div class="w">
+  <h1>🌐 The Web Dashboard</h1>
+  <p>An interactive app for tracking a motorcycle/car flipping business — built from scratch with no frameworks.</p>
+</div></div>
+
+<div class="w">
+  <p class="lead">This is a single, self-contained web app that runs entirely in the browser — no
+  server, no login, no install. It tracks every vehicle bought and sold, and turns that data into
+  live <b>Inventory</b> and <b>Sales</b> dashboards that update the instant you add or sell a vehicle.</p>
+
+  <h2>What a recruiter can do with it</h2>
+  <div class="cards">
+    <div class="card"><h3>Add a vehicle</h3><p>Click “Add Bike/Car,” enter the details — it appears in inventory immediately.</p></div>
+    <div class="card"><h3>Mark it sold</h3><p>Enter a sell price and date; it moves to the Sales view and profit/ROI recalculate.</p></div>
+    <div class="card"><h3>See the numbers</h3><p>KPI cards, profit-by-month and profit-by-make charts, and a “most-sold models” ranking.</p></div>
+    <div class="card"><h3>Track partners</h3><p>Each vehicle logs partners and auto-calculates each person’s cash share %.</p></div>
+  </div>
+
+  <h2>How it was built</h2>
+  <ol class="steps">
+    <li><b>Data model first.</b> Each vehicle is a record with buy/sell prices, dates, buyer, and a list of partners. Profit, ROI, and days-to-sell are <b>calculated</b>, never typed.</li>
+    <li><b>Pure HTML, CSS &amp; JavaScript.</b> No frameworks — the logic that groups, sorts, and totals the data is hand-written JavaScript.</li>
+    <li><b>Live charts.</b> Chart.js renders the profit graphs; they redraw automatically whenever the data changes.</li>
+    <li><b>Saved in the browser.</b> Your entries persist locally (localStorage), and there’s CSV/JSON export so the data can move to Excel or a database.</li>
+    <li><b>Self-healing.</b> On load it back-fills any missing fields (e.g., partner splits) so the app never shows a broken row.</li>
+  </ol>
+
+  <h2>Skills this demonstrates</h2>
+  <div class="tags">
+    <span class="tag">JavaScript (vanilla)</span><span class="tag">HTML / CSS</span>
+    <span class="tag">Data modeling</span><span class="tag">Chart.js</span>
+    <span class="tag">State &amp; persistence</span><span class="tag">UX design</span>
+  </div>
+
+  <div class="callout">
+    <b>Why it matters:</b> it’s a complete product, not a snippet — data in, calculations,
+    visualization, and persistence, all working together and usable by a non-technical person.
+  </div>
+
+  <a class="cta" href="index.html">▶ Open the live dashboard</a>
+</div>
+
+<footer>Automotive Inventory Dashboard · built by Zeshan Murtaza</footer>
+</body></html>

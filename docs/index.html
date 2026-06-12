@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Automotive Inventory Dashboard</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+  :root{--navy:#1F3A5F;--accent:#2E6DA4;--teal:#0F7B6C;--amber:#B26A00;--green:#2E7D32;
+        --light:#DCE6F1;--grey:#F2F4F7;--line:#E2E8F0;--ink:#1B2733;--muted:#64748B;}
+  *{box-sizing:border-box}
+  body{margin:0;font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:#F7F9FC;color:var(--ink);font-size:14px}
+  header{background:var(--navy);color:#fff;padding:14px 22px;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+  header h1{font-size:18px;margin:0;font-weight:700;letter-spacing:.3px}
+  header .sub{font-size:12px;color:#A9C2DE}
+  .tabs{display:flex;gap:4px;background:#fff;padding:0 22px;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5;flex-wrap:wrap}
+  .tab{padding:12px 18px;cursor:pointer;border:none;background:none;font-size:14px;font-weight:600;color:var(--muted);border-bottom:3px solid transparent}
+  .tab.active{color:var(--navy);border-bottom-color:var(--accent)}
+  .wrap{padding:22px;max-width:1200px;margin:0 auto}
+  .view{display:none}.view.active{display:block}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:14px;margin-bottom:22px}
+  .card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;box-shadow:0 1px 2px rgba(16,24,40,.04)}
+  .card .label{font-size:11px;text-transform:uppercase;letter-spacing:.5px;color:var(--muted);font-weight:700}
+  .card .val{font-size:26px;font-weight:800;margin-top:6px;color:var(--navy)}
+  .card.green .val{color:var(--green)} .card.amber .val{color:var(--amber)} .card.teal .val{color:var(--teal)}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px}
+  @media(max-width:760px){.grid2{grid-template-columns:1fr}}
+  .panel{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:18px}
+  .panel h3{margin:0 0 12px;font-size:14px;color:var(--navy)}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--line);white-space:nowrap}
+  th{background:var(--navy);color:#fff;font-size:11px;text-transform:uppercase;letter-spacing:.4px;position:sticky;top:0}
+  tbody tr:nth-child(even){background:var(--grey)}
+  td.num,th.num{text-align:right}
+  .thumb{width:42px;height:30px;border-radius:6px;object-fit:cover;background:#dde6f1;display:block;border:1px solid var(--line)}
+  .tico{width:42px;height:30px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:18px;background:#EAF1FB;border:1px solid var(--line)}
+  .pill{padding:2px 9px;border-radius:99px;font-size:11px;font-weight:700}
+  .pill.sold{background:#E4F3E8;color:var(--green)} .pill.inv{background:#FBEBD7;color:var(--amber)}
+  .btn{border:none;border-radius:8px;padding:8px 14px;font-size:13px;font-weight:600;cursor:pointer}
+  .btn.primary{background:var(--accent);color:#fff} .btn.ghost{background:#fff;border:1px solid var(--line);color:var(--navy)}
+  .btn.sell{background:var(--green);color:#fff;padding:4px 10px;font-size:12px}
+  .btn.edit{background:#EEF2F7;color:var(--navy);padding:4px 10px;font-size:12px}
+  .btn.del{background:#FBE9E9;color:#B42318;padding:4px 10px;font-size:12px}
+  .btn.mini{padding:4px 9px;font-size:12px}
+  .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center}
+  .toolbar .spacer{flex:1}
+  .modal{position:fixed;inset:0;background:rgba(16,24,40,.45);display:none;align-items:center;justify-content:center;z-index:20}
+  .modal.open{display:flex}
+  .dialog{background:#fff;border-radius:14px;padding:22px;width:min(540px,94vw);max-height:92vh;overflow:auto;box-shadow:0 20px 50px rgba(0,0,0,.25)}
+  .dialog h3{margin:0 0 14px;color:var(--navy)}
+  .field{margin-bottom:12px}.field label{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:4px}
+  .field input,.field select{width:100%;padding:9px 10px;border:1px solid var(--line);border-radius:8px;font-size:14px}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .section{border-top:1px solid var(--line);margin-top:8px;padding-top:12px}
+  .section .h{font-size:12px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+  .prow{display:grid;grid-template-columns:1.2fr .85fr 52px 1.3fr auto;gap:6px;margin-bottom:6px;align-items:center}
+  .prow input{padding:7px 8px;border:1px solid var(--line);border-radius:7px;font-size:13px;width:100%}
+  .prow .pct{text-align:center;font-weight:800;font-size:13px;color:var(--accent);background:#EAF1FB;border:1px solid var(--line);border-radius:7px;padding:7px 4px}
+  .prow .x{background:#FBE9E9;color:#B42318;border:none;border-radius:6px;padding:6px 9px;cursor:pointer;font-weight:700}
+  .dialog .actions{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+  .chartbox{position:relative;height:260px}
+  .hint{font-size:12px;color:var(--muted);margin:-6px 0 14px}
+  .sub2{font-size:11px;color:var(--muted)}
+  .pvw{display:flex;align-items:center;gap:10px;margin-top:6px}
+  .pvw img{width:70px;height:50px;object-fit:cover;border-radius:8px;border:1px solid var(--line);background:#eef}
+</style>
+</head>
+<body>
+<header>
+  <div><h1>🚗 Automotive Inventory Dashboard</h1><div class="sub">Buy · recondition · resell — all vehicles · live inventory & sales</div></div>
+  <div class="sub" id="savedNote">Saved locally in your browser</div>
+</header>
+<div class="tabs">
+  <button class="tab active" data-v="inv">Inventory Dashboard</button>
+  <button class="tab" data-v="sales">Sales Dashboard</button>
+  <button class="tab" data-v="records">All Records</button>
+</div>
+<div class="wrap">
+
+  <div class="view active" id="view-inv">
+    <div class="cards" id="invCards"></div>
+    <div class="panel"><h3>Current Inventory (newest first)</h3>
+      <table><thead><tr><th></th><th>Purchased</th><th>Year</th><th>Make</th><th>Model</th><th class="num">Buy Price</th><th class="num">Days Held</th><th>Partners</th><th></th></tr></thead>
+      <tbody id="invList"></tbody></table>
+    </div>
+  </div>
+
+  <div class="view" id="view-sales">
+    <div class="cards" id="salesCards"></div>
+    <div class="grid2">
+      <div class="panel"><h3>Profit by Month</h3><div class="chartbox"><canvas id="monthChart"></canvas></div></div>
+      <div class="panel"><h3>Profit by Make</h3><div class="chartbox"><canvas id="makeChart"></canvas></div></div>
+    </div>
+    <div class="panel"><h3>Most-Sold Models — fastest movers first</h3>
+      <div class="sub2" style="margin-bottom:8px">Ranked by how often a model sells; ties broken by quickest average time to sell.</div>
+      <table><thead><tr><th>Model</th><th class="num">Times Sold</th><th class="num">Avg Days to Sell</th><th class="num">Avg Profit</th></tr></thead>
+      <tbody id="popList"></tbody></table>
+    </div>
+    <div class="panel"><h3>Sold Vehicles (newest first)</h3>
+      <table><thead><tr><th></th><th>Sold</th><th>Year</th><th>Make</th><th>Model</th><th class="num">Buy</th><th class="num">Sell</th><th class="num">Profit</th><th class="num">ROI</th><th>Buyer</th><th>Partners</th><th></th></tr></thead>
+      <tbody id="soldList"></tbody></table>
+    </div>
+  </div>
+
+  <div class="view" id="view-records">
+    <div class="toolbar">
+      <button class="btn primary" onclick="openAdd('Motorcycle')">+ Add Bike</button>
+      <button class="btn primary" onclick="openAdd('Car')">+ Add Car</button>
+      <input id="search" class="btn ghost" placeholder="Search…" oninput="renderRecords()" style="cursor:text">
+      <span class="spacer"></span>
+      <button class="btn ghost" onclick="exportCSV()">Export CSV</button>
+      <button class="btn ghost" onclick="exportJSON()">Export JSON</button>
+      <button class="btn ghost" onclick="document.getElementById('imp').click()">Import JSON</button>
+      <input type="file" id="imp" accept=".json" style="display:none" onchange="importJSON(event)">
+      <button class="btn ghost" onclick="resetData()">Reset</button>
+    </div>
+    <div class="hint">Click any vehicle to open it — add a <b>photo</b>, record the <b>buyer</b> &amp; contact when it sells, and log <b>partners</b> (cash and/or labor). Leave Sell Price blank to keep it in Inventory.</div>
+    <div class="panel" style="padding:0;overflow:auto;max-height:70vh">
+      <table><thead><tr><th></th><th>Purchased</th><th>Year</th><th>Make</th><th>Model</th><th>Type</th><th>Status</th>
+      <th class="num">Buy</th><th class="num">Sell</th><th class="num">Profit</th><th>Buyer</th><th>Partners</th><th></th></tr></thead>
+      <tbody id="recList"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="modal">
+  <div class="dialog">
+    <h3 id="modalTitle">Add Vehicle</h3>
+    <div class="row2">
+      <div class="field"><label>Year</label><input id="f_year" type="number" placeholder="2023"></div>
+      <div class="field"><label>Type</label><select id="f_type"><option>Motorcycle</option><option>Car</option><option>Truck</option><option>SUV</option><option>Other</option></select></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Make</label><input id="f_make" placeholder="Toyota"></div>
+      <div class="field"><label>Model</label><input id="f_model" placeholder="Camry"></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Buy Price ($)</label><input id="f_buy" type="number" placeholder="3500"></div>
+      <div class="field"><label>Purchase Date</label><input id="f_purchase" type="date"></div>
+    </div>
+    <div class="row2">
+      <div class="field"><label>Sell Price ($) <span class="sub2">— blank = inventory</span></label><input id="f_sell" type="number"></div>
+      <div class="field"><label>Sale Date</label><input id="f_sale" type="date"></div>
+    </div>
+    <div class="field"><label>Photo URL (optional)</label><input id="f_photo" placeholder="https://… link to a photo of the vehicle" oninput="photoPreview()">
+      <div class="pvw" id="photoPvw" style="display:none"><img id="photoImg" alt=""><span class="sub2">Preview</span></div>
+    </div>
+
+    <div class="section">
+      <div class="h">Buyer (when sold)</div>
+      <div class="row2">
+        <div class="field" style="margin-bottom:6px"><label>Sold To (name)</label><input id="f_buyer" placeholder="e.g. Jordan M."></div>
+        <div class="field" style="margin-bottom:6px"><label>Contact (phone / email)</label><input id="f_buyerContact" placeholder="e.g. 555-123-4567"></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="h"><span>Partners Log</span><button class="btn ghost mini" type="button" onclick="addPartnerRow()">+ Add partner</button></div>
+      <div class="sub2" style="margin-bottom:8px">Name · cash in · <b>share %</b> (auto, of total partner cash) · labor/work done.</div>
+      <div id="partnerRows"></div>
+    </div>
+
+    <div class="actions">
+      <button class="btn ghost" onclick="closeModal()">Cancel</button>
+      <button class="btn primary" onclick="saveModal()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SEED = /*__SEED__*/[{"id": 1, "make": "Kawasaki", "model": "Ninja 300", "year": 2014, "type": "Motorcycle", "buy": 2500, "sell": null, "purchase": "2026-06-03", "sale": null, "buyer": "", "buyerContact": "", "partners": [{"name": "Zeshan", "cash": 1250.0, "pct": 50, "labor": ""}, {"name": "Asmaar", "cash": 1250.0, "pct": 50, "labor": ""}]}, {"id": 2, "make": "Kawasaki", "model": "Ninja 300", "year": 2015, "type": "Motorcycle", "buy": 2400, "sell": null, "purchase": "2026-05-16", "sale": null, "buyer": "", "buyerContact": "", "partners": [{"name": "Zeshan", "cash": 1200.0, "pct": 50, "labor": ""}, {"name": "Asmaar", "cash": 1200.0, "pct": 50, "labor": ""}]}, {"id": 3, "make": "Kawasaki", "model": "Ninja 650", "year": 2021, "type": "Motorcycle", "buy": 4800, "sell": null, "purchase": "2026-05-09", "sale": null, "buyer": "", "buyerContact": "", "partners": [{"name": "Zeshan", "cash": 2400.0, "pct": 50, "labor": ""}, {"name": "Asmaar", "cash": 2400.0, "pct": 50, "labor": ""}]}, {"id": 4, "make": "Kawasaki", "model": "ZX-6R", "year": 2024, "type": "Motorcycle", "buy": 8500, "sell": 9400, "purchase": "2026-05-02", "sale": "2026-05-20", "buyer": "", "buyerContact": "", "partners": [{"name": "Zeshan", "cash": 4250.0, "pct": 50, "labor": ""}, {"name": "Asmaar", "cash": 4250.0, "pct": 50, "labor": ""}]}, {"id": 5, "make": "Yamaha", "model": "YZF-R3", "year": 2015, "type": "Motorcycle", "buy": 2500, "sell": null, "purchase": "2026-04-20", "sale": null, "buyer": "", "buyerContact": "", "partners": [{"name": "Zeshan", "cash": 1250.0, "pct": 50, "labor": ""}, {"name": "Asmaar", "cash": 1250.0, "pct": 50, "labor": ""}]}, {"id": 6, "make": "Yamaha", "model": "YZF-R3", "year": 2024, "type": "Motorcycle", "buy": 3700, "sell": 4600, "purchase": "2026-04-12", "sale": "2026-04-24", "buyer": "", "buyerContact": "", "partners": [{"name": "Zeshan", "cash": 1850.0, "pct": 50, "labor": ""}, {"name": "Asmaar", "cash": 1850.0, "pct": 50, "labor": ""}]}, {"id": 7, "make": "Kawasaki", "model": "Ninja 300", "year": 2015, "type": "Motorcycle", "buy": 2600, "sell": 3600, "purchase": "2026-04-04", "sale": "2026-04-14", "buyer": "", "buyerContact": "", "partners": [{"name": "Zeshan", "cash": 1300.0, "pct": 50, "labor": ""}, {"name": "Asmaar", "cash": 1300.0, "pct": 50, "labor": ""}]}, {"id": 8, "make": "CFMoto", "model": "300SS", "year": 2023, "type": "Motorcycle", "buy": 2400, "sell": 3200, "purchase": "2026-03-24", "sale": "2026-04-06", "buyer": "", "buyerContact": "", "partners": [{"name": "Zeshan", "cash": 1200.0, "pct": 50, "labor": ""}, {"name": "Asmaar", "cash": 1200.0, "pct": 50, "labor": ""}]}, {"id": 9, "make": "Kawasaki", "model": "Ninja 500", "year": 2025, "type": "Motorcycle", "buy": 4100, "sell": 5000, "purchase": "2026-03-15", "sale": "2026-03-26", "buyer": "", "buyerContact": "", "partners": [{"name": "Zeshan", "cash": 2050.0, "pct": 50, "labor": ""}, {"name": "Asmaar", "cash": 2050.0, "pct": 50, "labor": ""}]}, {"id": 10, "make": "Kawasaki", "model": "Ninja 650", "year": 2019, "type": "Motorcycle", "buy": 2800, "sell": 4000, "purchase": "2026-03-08", "sale": "2026-03-24", "buyer": "", "buyerContact": "", "partners": [{"name": "Zeshan", "cash": 1400.0, "pct": 50, "labor": ""}, {"name": "Asmaar", "cash": 1400.0, "pct": 50, "labor": ""}]}, {"id": 11, "make": "Kawasaki", "model": "Ninja 400", "year": 2021, "type": "Motorcycle", "buy": 3500, "sell": 4250, "purchase": "2026-03-03", "sale": "2026-03-12", "buyer": "", "buyerContact": "", "partners": [{"name": "Zeshan", "cash": 1750.0, "pct": 50, "labor": ""}, {"name": "Asmaar", "cash": 1750.0, "pct": 50, "labor": ""}]}, {"id": 12, "make": "Kawasaki", "model": "Ninja 400", "year": 2023, "type": "Motorcycle", "buy": 3400, "sell": 4000, "purchase": "2026-02-18", "sale": "2026-03-04", "buyer": "", "buyerContact": "", "partners": [{"name": "Zeshan", "cash": 1700.0, "pct": 50, "labor": ""}, {"name": "Asmaar", "cash": 1700.0, "pct": 50, "labor": ""}]}, {"id": 13, "make": "Honda", "model": "CBR500R", "year": 2017, "type": "Motorcycle", "buy": 3700, "sell": 4200, "purchase": "2026-02-05", "sale": "2026-02-27", "buyer": "", "buyerContact": "", "partners": [{"name": "Zeshan", "cash": 1850.0, "pct": 50, "labor": ""}, {"name": "Asmaar", "cash": 1850.0, "pct": 50, "labor": ""}]}, {"id": 14, "make": "Kawasaki", "model": "Ninja 500", "year": 2024, "type": "Motorcycle", "buy": 4000, "sell": 4750, "purchase": "2025-11-09", "sale": "2025-11-21", "buyer": "", "buyerContact": "", "partners": [{"name": "Zeshan", "cash": 2000.0, "pct": 50, "labor": ""}, {"name": "Asmaar", "cash": 2000.0, "pct": 50, "labor": ""}]}, {"id": 15, "make": "Ducati", "model": "Monster 696", "year": 2009, "type": "Motorcycle", "buy": 3000, "sell": 3200, "purchase": "2025-10-06", "sale": "2025-11-03", "buyer": "", "buyerContact": "", "partners": [{"name": "Zeshan", "cash": 1500.0, "pct": 50, "labor": ""}, {"name": "Asmaar", "cash": 1500.0, "pct": 50, "labor": ""}]}, {"id": 16, "make": "Kawasaki", "model": "Ninja 400", "year": 2023, "type": "Motorcycle", "buy": 4000, "sell": 4900, "purchase": "2025-09-22", "sale": "2025-10-07", "buyer": "", "buyerContact": "", "partners": [{"name": "Zeshan", "cash": 2000.0, "pct": 50, "labor": ""}, {"name": "Asmaar", "cash": 2000.0, "pct": 50, "labor": ""}]}, {"id": 17, "make": "Kawasaki", "model": "Ninja 500", "year": 2025, "type": "Motorcycle", "buy": 4350, "sell": 4900, "purchase": "2025-09-14", "sale": "2025-09-24", "buyer": "", "buyerContact": "", "partners": [{"name": "Zeshan", "cash": 2175.0, "pct": 50, "labor": ""}, {"name": "Asmaar", "cash": 2175.0, "pct": 50, "labor": ""}]}, {"id": 18, "make": "Toyota", "model": "Camry", "year": 2009, "type": "Car", "buy": 3200, "sell": null, "purchase": "2025-09-08", "sale": null, "buyer": "", "buyerContact": "", "partners": [{"name": "Zeshan", "cash": 1600.0, "pct": 50, "labor": ""}, {"name": "Asmaar", "cash": 1600.0, "pct": 50, "labor": ""}]}, {"id": 19, "make": "Toyota", "model": "Camry", "year": 2010, "type": "Car", "buy": 2800, "sell": 3950, "purchase": "2025-09-04", "sale": "2025-09-21", "buyer": "", "buyerContact": "", "partners": [{"name": "Zeshan", "cash": 1400.0, "pct": 50, "labor": ""}, {"name": "Asmaar", "cash": 1400.0, "pct": 50, "labor": ""}]}, {"id": 20, "make": "Toyota", "model": "Camry", "year": 2011, "type": "Car", "buy": 3600, "sell": 4800, "purchase": "2025-08-29", "sale": "2025-09-18", "buyer": "", "buyerContact": "", "partners": [{"name": "Zeshan", "cash": 1800.0, "pct": 50, "labor": ""}, {"name": "Asmaar", "cash": 1800.0, "pct": 50, "labor": ""}]}, {"id": 21, "make": "Yamaha", "model": "YZF-R3", "year": 2021, "type": "Motorcycle", "buy": 3500, "sell": 4900, "purchase": "2025-08-27", "sale": "2025-09-09", "buyer": "", "buyerContact": "", "partners": [{"name": "Zeshan", "cash": 1750.0, "pct": 50, "labor": ""}, {"name": "Asmaar", "cash": 1750.0, "pct": 50, "labor": ""}]}, {"id": 22, "make": "Kawasaki", "model": "Ninja 400", "year": 2021, "type": "Motorcycle", "buy": 4000, "sell": 5250, "purchase": "2025-08-24", "sale": "2025-08-31", "buyer": "", "buyerContact": "", "partners": [{"name": "Zeshan", "cash": 2000.0, "pct": 50, "labor": ""}, {"name": "Asmaar", "cash": 2000.0, "pct": 50, "labor": ""}]}, {"id": 23, "make": "Yamaha", "model": "YZF-R3", "year": 2015, "type": "Motorcycle", "buy": 3000, "sell": 3900, "purchase": "2025-08-20", "sale": "2025-09-07", "buyer": "", "buyerContact": "", "partners": [{"name": "Zeshan", "cash": 1500.0, "pct": 50, "labor": ""}, {"name": "Asmaar", "cash": 1500.0, "pct": 50, "labor": ""}]}, {"id": 24, "make": "Kawasaki", "model": "Ninja 400", "year": 2020, "type": "Motorcycle", "buy": 3350, "sell": 5100, "purchase": "2025-08-18", "sale": "2025-08-29", "buyer": "", "buyerContact": "", "partners": [{"name": "Zeshan", "cash": 1675.0, "pct": 50, "labor": ""}, {"name": "Asmaar", "cash": 1675.0, "pct": 50, "labor": ""}]}, {"id": 25, "make": "Kawasaki", "model": "Ninja 650", "year": 2021, "type": "Motorcycle", "buy": 3000, "sell": 4725, "purchase": "2025-08-12", "sale": "2025-08-28", "buyer": "", "buyerContact": "", "partners": [{"name": "Zeshan", "cash": 1500.0, "pct": 50, "labor": ""}, {"name": "Asmaar", "cash": 1500.0, "pct": 50, "labor": ""}]}, {"id": 26, "make": "Kawasaki", "model": "Z500", "year": 2024, "type": "Motorcycle", "buy": 4200, "sell": 5000, "purchase": "2025-08-09", "sale": "2025-08-30", "buyer": "", "buyerContact": "", "partners": [{"name": "Zeshan", "cash": 2100.0, "pct": 50, "labor": ""}, {"name": "Asmaar", "cash": 2100.0, "pct": 50, "labor": ""}]}, {"id": 27, "make": "Kawasaki", "model": "Ninja 300", "year": 2015, "type": "Motorcycle", "buy": 2500, "sell": 3600, "purchase": "2025-08-05", "sale": "2025-08-19", "buyer": "", "buyerContact": "", "partners": [{"name": "Zeshan", "cash": 1250.0, "pct": 50, "labor": ""}, {"name": "Asmaar", "cash": 1250.0, "pct": 50, "labor": ""}]}, {"id": 28, "make": "Kawasaki", "model": "Ninja 400", "year": 2023, "type": "Motorcycle", "buy": 4000, "sell": 5150, "purchase": "2025-08-03", "sale": "2025-08-12", "buyer": "", "buyerContact": "", "partners": [{"name": "Zeshan", "cash": 2000.0, "pct": 50, "labor": ""}, {"name": "Asmaar", "cash": 2000.0, "pct": 50, "labor": ""}]}, {"id": 29, "make": "Kawasaki", "model": "Ninja 250", "year": 2017, "type": "Motorcycle", "buy": 2500, "sell": 3400, "purchase": "2025-07-15", "sale": "2025-07-27", "buyer": "", "buyerContact": "", "partners": [{"name": "Zeshan", "cash": 1250.0, "pct": 50, "labor": ""}, {"name": "Asmaar", "cash": 1250.0, "pct": 50, "labor": ""}]}, {"id": 30, "make": "KTM", "model": "Duke 390", "year": 2023, "type": "Motorcycle", "buy": 3000, "sell": 4750, "purchase": "2025-07-08", "sale": "2025-07-27", "buyer": "", "buyerContact": "", "partners": [{"name": "Zeshan", "cash": 1500.0, "pct": 50, "labor": ""}, {"name": "Asmaar", "cash": 1500.0, "pct": 50, "labor": ""}]}];
+const KEY = "auto_inventory_v1";
+let data = load();
+let editId = null;
+let charts = {};
+
+function defaultPartners(buy){ const h=Math.round((+buy||0)/2*100)/100;
+  return [{name:"Zeshan",cash:h,pct:50,labor:""},{name:"Asmaar",cash:h,pct:50,labor:""}]; }
+function load(){
+  let d; try{const s=localStorage.getItem(KEY); d=s?JSON.parse(s):structuredClone(SEED);}catch(e){d=structuredClone(SEED);}
+  let changed=false;
+  d.forEach(r=>{ if(!Array.isArray(r.partners)||r.partners.length===0){ r.partners=defaultPartners(r.buy); changed=true; } });
+  if(changed){ try{localStorage.setItem(KEY, JSON.stringify(d));}catch(e){} }
+  return d;
+}
+function save(){ localStorage.setItem(KEY, JSON.stringify(data)); flash(); }
+function flash(){ document.getElementById('savedNote').textContent="✓ Saved "+new Date().toLocaleTimeString(); }
+function nextId(){ return data.reduce((m,r)=>Math.max(m,r.id),0)+1; }
+const money=v=>v==null||v===""?"—":"$"+Math.round(v).toLocaleString();
+const pct=v=>(v==null||!isFinite(v))?"—":(v*100).toFixed(1)+"%";
+const isSold=r=>r.sell!=null && r.sell!=="";
+const profit=r=>isSold(r)?r.sell-r.buy:null;
+const today=()=>new Date().toISOString().slice(0,10);
+const daysBetween=(a,b)=>Math.round((new Date(b)-new Date(a))/864e5);
+const daysHeld=r=>daysBetween(r.purchase,today());
+const daysToSell=r=>isSold(r)&&r.sale?daysBetween(r.purchase,r.sale):null;
+const ym=d=>d?d.slice(0,7):null;
+function fmtDate(iso){ if(!iso) return ""; const [y,m,d]=iso.split("-"); return `${m}/${d}/${y}`; }
+const byDateDesc=key=>(a,b)=>((b[key]||"").localeCompare(a[key]||""));
+const partnersText=r=>(r.partners&&r.partners.length)?r.partners.filter(p=>p.name).map(p=>p.name+(p.pct!=null?` (${p.pct}%)`:"")).join(", ")||"—":"—";
+const EMO={Motorcycle:"🏍️",Car:"🚗",Truck:"🛻",SUV:"🚙",Other:"🚘"};
+function esc(s){return String(s==null?"":s).replace(/"/g,'&quot;');}
+function vmedia(r){
+  const emo=EMO[r.type]||"🚘";
+  const icon=`<span class="tico"${r.photo?' style="display:none"':''}>${emo}</span>`;
+  const img=r.photo?`<img class="thumb" src="${esc(r.photo)}" alt="" onerror="this.style.display='none';this.previousElementSibling.style.display='flex'">`:"";
+  return icon+img;
+}
+
+document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.view').forEach(x=>x.classList.remove('active'));
+  t.classList.add('active'); document.getElementById('view-'+t.dataset.v).classList.add('active'); renderAll();
+});
+
+function addPartnerRow(p){ p=p||{name:"",cash:"",labor:""};
+  const wrap=document.getElementById('partnerRows');
+  const div=document.createElement('div'); div.className='prow';
+  div.innerHTML=`<input placeholder="Partner name" value="${esc(p.name)}">
+    <input type="number" placeholder="Cash $" value="${p.cash??""}" oninput="recalcPartnerPct()">
+    <span class="pct" title="Share of total partner cash">—</span>
+    <input placeholder="Labor / work done" value="${esc(p.labor)}">
+    <button class="x" type="button" title="Remove">✕</button>`;
+  div.querySelector('.x').onclick=()=>{ div.remove(); recalcPartnerPct(); };
+  wrap.appendChild(div);
+  recalcPartnerPct();
+}
+function recalcPartnerPct(){
+  const rows=[...document.querySelectorAll('#partnerRows .prow')];
+  let total=0; rows.forEach(r=>{ total += (+r.querySelectorAll('input')[1].value || 0); });
+  rows.forEach(r=>{
+    const cash=+r.querySelectorAll('input')[1].value || 0;
+    const span=r.querySelector('.pct');
+    span.textContent = (total>0 && cash>0) ? Math.round(100*cash/total)+'%' : '—';
+  });
+}
+function collectPartners(){
+  const rows=[...document.querySelectorAll('#partnerRows .prow')];
+  let total=0; rows.forEach(r=>{ total += (+r.querySelectorAll('input')[1].value || 0); });
+  return rows.map(row=>{
+    const i=row.querySelectorAll('input');
+    const cash=i[1].value===""?"":+i[1].value;
+    const pctNum=(total>0 && cash!=="" && cash>0)? Math.round(100*cash/total):null;
+    return {name:i[0].value.trim(), cash, pct:pctNum, labor:i[2].value.trim()};
+  }).filter(p=>p.name||(p.cash!==""&&p.cash!=null)||p.labor);
+}
+function photoPreview(){ const u=document.getElementById('f_photo').value.trim();
+  const box=document.getElementById('photoPvw'); const img=document.getElementById('photoImg');
+  if(u){ img.src=u; box.style.display="flex"; } else box.style.display="none";
+}
+
+function openAdd(type){ type=type||"Motorcycle"; editId=null;
+  document.getElementById('modalTitle').textContent = type==="Car"?"Add Car":(type==="Motorcycle"?"Add Bike":"Add Vehicle");
+  ['year','make','model','buy','sell','purchase','sale','buyer','buyerContact','photo'].forEach(f=>document.getElementById('f_'+f).value="");
+  document.getElementById('f_type').value=type; document.getElementById('partnerRows').innerHTML="";
+  document.getElementById('photoPvw').style.display="none";
+  document.getElementById('modal').classList.add('open');
+}
+function openEdit(id){ editId=id; const r=data.find(x=>x.id===id);
+  document.getElementById('modalTitle').textContent=`${r.year} ${r.make} ${r.model}`.trim();
+  document.getElementById('f_year').value=r.year; document.getElementById('f_type').value=r.type||"Motorcycle";
+  document.getElementById('f_make').value=r.make; document.getElementById('f_model').value=r.model;
+  document.getElementById('f_buy').value=r.buy; document.getElementById('f_sell').value=r.sell??"";
+  document.getElementById('f_purchase').value=r.purchase||""; document.getElementById('f_sale').value=r.sale||"";
+  document.getElementById('f_buyer').value=r.buyer||""; document.getElementById('f_buyerContact').value=r.buyerContact||"";
+  document.getElementById('f_photo').value=r.photo||""; photoPreview();
+  const wrap=document.getElementById('partnerRows'); wrap.innerHTML=""; (r.partners||[]).forEach(p=>addPartnerRow(p));
+  document.getElementById('modal').classList.add('open');
+}
+function closeModal(){ document.getElementById('modal').classList.remove('open'); }
+function saveModal(){
+  const g=f=>document.getElementById('f_'+f).value;
+  const rec={ id: editId??nextId(), year:+g('year')||0, type:g('type'),
+    make:g('make').trim()||"Unknown", model:g('model').trim(),
+    buy:+g('buy')||0, sell: g('sell')===""?null:+g('sell'),
+    purchase:g('purchase')||today(), sale:g('sale')||null,
+    buyer:g('buyer').trim(), buyerContact:g('buyerContact').trim(),
+    photo:g('photo').trim(), partners:collectPartners() };
+  if(rec.sell!=null && !rec.sale) rec.sale=today();
+  if(editId==null) data.push(rec); else data=data.map(x=>x.id===editId?rec:x);
+  save(); closeModal(); renderAll();
+}
+function quickSell(id){ openEdit(id); document.getElementById('f_sell').focus(); }
+function del(id){ if(confirm("Delete this record?")){ data=data.filter(x=>x.id!==id); save(); renderAll(); } }
+function resetData(){ if(confirm("Reset to the original seed data? This clears your changes.")){ data=structuredClone(SEED); save(); renderAll(); } }
+
+function exportJSON(){ download("automotive_inventory.json", JSON.stringify(data,null,2)); }
+function exportCSV(){
+  const h=["id","make","model","year","type","status","buy","sell","profit","days_to_sell","purchase","sale","buyer","buyer_contact","partners","photo"];
+  const lines=[h.join(",")];
+  data.slice().sort(byDateDesc('purchase')).forEach(r=>{
+    const pj=(r.partners||[]).map(p=>`${p.name}${p.cash!==""&&p.cash!=null?" $"+p.cash:""}${p.labor?" ("+p.labor+")":""}`).join("; ");
+    lines.push([r.id,r.make,r.model,r.year,r.type,isSold(r)?"Sold":"In Inventory",r.buy,r.sell??"",profit(r)??"",daysToSell(r)??"",r.purchase,r.sale??"",r.buyer||"",r.buyerContact||"",pj,r.photo||""]
+      .map(v=>{v=String(v); return v.includes(",")||v.includes('"')?'"'+v.replace(/"/g,'""')+'"':v;}).join(","));
+  });
+  download("automotive_inventory.csv", lines.join("\n"));
+}
+function download(name,txt){ const b=new Blob([txt],{type:"text/plain"}); const a=document.createElement("a"); a.href=URL.createObjectURL(b); a.download=name; a.click(); }
+function importJSON(e){ const f=e.target.files[0]; if(!f)return; const rd=new FileReader();
+  rd.onload=()=>{ try{ data=JSON.parse(rd.result); save(); renderAll(); }catch(x){alert("Invalid JSON");} }; rd.readAsText(f); }
+
+function card(label,val,cls=""){ return `<div class="card ${cls}"><div class="label">${label}</div><div class="val">${val}</div></div>`; }
+
+function renderInv(){
+  const inv=data.filter(r=>!isSold(r)).sort(byDateDesc('purchase'));
+  const cap=inv.reduce((s,r)=>s+r.buy,0);
+  const avg=inv.length?inv.reduce((s,r)=>s+daysHeld(r),0)/inv.length:0;
+  document.getElementById('invCards').innerHTML=
+    card("Units in Inventory",inv.length,"teal")+card("Capital Tied Up",money(cap),"amber")+card("Avg Days Held",avg.toFixed(0),"teal");
+  document.getElementById('invList').innerHTML = inv.map(r=>
+    `<tr style="cursor:pointer" onclick="openEdit(${r.id})">
+      <td>${vmedia(r)}</td><td>${fmtDate(r.purchase)}</td><td>${r.year}</td><td>${r.make}</td><td>${r.model}</td>
+      <td class="num">${money(r.buy)}</td><td class="num">${daysHeld(r)}</td><td>${partnersText(r)}</td>
+      <td onclick="event.stopPropagation()"><button class="btn sell" onclick="quickSell(${r.id})">Sell</button>
+          <button class="btn edit" onclick="openEdit(${r.id})">Edit</button></td></tr>`).join("")
+    || `<tr><td colspan="9" style="color:var(--muted)">No inventory — everything's sold!</td></tr>`;
+}
+
+function renderSales(){
+  const sold=data.filter(isSold);
+  const tp=sold.reduce((s,r)=>s+profit(r),0), rev=sold.reduce((s,r)=>s+r.sell,0), cogs=sold.reduce((s,r)=>s+r.buy,0);
+  const dd=sold.filter(r=>daysToSell(r)!=null);
+  const avgDays=dd.length?dd.reduce((s,r)=>s+daysToSell(r),0)/dd.length:0;
+  document.getElementById('salesCards').innerHTML=
+    card("Units Sold",sold.length,"")+card("Total Profit",money(tp),"green")+card("Total Sales (cumulative)",money(rev),"")+
+    card("Overall ROI",pct(cogs?tp/cogs:0),"green")+card("Avg Profit / Sale",money(sold.length?tp/sold.length:0),"")+card("Avg Days to Sell",avgDays.toFixed(1),"");
+  const mo={}; sold.forEach(r=>{const k=ym(r.sale)||"n/a"; mo[k]=(mo[k]||0)+profit(r);});
+  const mk=Object.keys(mo).sort();
+  drawBar("monthChart",mk.map(fmtMonth),mk.map(k=>mo[k]),"Profit ($)","#2E6DA4");
+  const bm={}; sold.forEach(r=>bm[r.make]=(bm[r.make]||0)+profit(r));
+  const bme=Object.entries(bm).sort((a,b)=>b[1]-a[1]);
+  drawBar("makeChart",bme.map(x=>x[0]),bme.map(x=>x[1]),"Profit ($)","#2E7D32","y");
+  const md={};
+  sold.forEach(r=>{const k=`${r.make} ${r.model}`.trim(); const o=md[k]||(md[k]={n:0,days:0,dc:0,profit:0});
+    o.n++; o.profit+=profit(r); const d=daysToSell(r); if(d!=null){o.days+=d; o.dc++;}});
+  const pop=Object.entries(md).map(([k,v])=>({model:k,n:v.n,avgDays:v.dc?v.days/v.dc:null,avgProfit:v.profit/v.n}))
+    .sort((a,b)=> b.n-a.n || ((a.avgDays??1e9)-(b.avgDays??1e9)));
+  document.getElementById('popList').innerHTML = pop.map(p=>
+    `<tr><td>${p.model}</td><td class="num">${p.n}</td><td class="num">${p.avgDays==null?'—':p.avgDays.toFixed(1)}</td><td class="num">${money(p.avgProfit)}</td></tr>`).join("")
+    || `<tr><td colspan="4" style="color:var(--muted)">No sales yet.</td></tr>`;
+  document.getElementById('soldList').innerHTML = sold.slice().sort(byDateDesc('sale')).map(r=>
+    `<tr style="cursor:pointer" onclick="openEdit(${r.id})">
+      <td>${vmedia(r)}</td><td>${fmtDate(r.sale)}</td><td>${r.year}</td><td>${r.make}</td><td>${r.model}</td>
+      <td class="num">${money(r.buy)}</td><td class="num">${money(r.sell)}</td><td class="num">${money(profit(r))}</td>
+      <td class="num">${pct(profit(r)/r.buy)}</td><td>${r.buyer||"—"}</td><td>${partnersText(r)}</td>
+      <td onclick="event.stopPropagation()"><button class="btn edit" onclick="openEdit(${r.id})">Edit</button></td></tr>`).join("");
+}
+function fmtMonth(k){ if(k==="n/a")return k; const [y,m]=k.split("-"); return m+"/"+y.slice(2); }
+
+function renderRecords(){
+  const q=(document.getElementById('search').value||"").toLowerCase();
+  const rows=data.filter(r=>(`${r.year} ${r.make} ${r.model} ${r.type} ${r.buyer||""} ${partnersText(r)}`.toLowerCase().includes(q)))
+                 .sort(byDateDesc('purchase'));
+  document.getElementById('recList').innerHTML = rows.map(r=>{
+    const s=isSold(r);
+    return `<tr style="cursor:pointer" onclick="openEdit(${r.id})">
+      <td>${vmedia(r)}</td><td>${fmtDate(r.purchase)}</td><td>${r.year}</td><td>${r.make}</td><td>${r.model}</td><td>${r.type||""}</td>
+      <td><span class="pill ${s?'sold':'inv'}">${s?'Sold':'Inventory'}</span></td>
+      <td class="num">${money(r.buy)}</td><td class="num">${s?money(r.sell):'—'}</td>
+      <td class="num">${s?money(profit(r)):'—'}</td><td>${r.buyer||"—"}</td><td>${partnersText(r)}</td>
+      <td onclick="event.stopPropagation()" style="white-space:nowrap">${s?'':`<button class="btn sell" onclick="quickSell(${r.id})">Sell</button> `}
+        <button class="btn edit" onclick="openEdit(${r.id})">Edit</button>
+        <button class="btn del" onclick="del(${r.id})">✕</button></td></tr>`;
+  }).join("") || `<tr><td colspan="13" style="color:var(--muted)">No records.</td></tr>`;
+}
+
+function drawBar(id,labels,vals,lab,color,axis="x"){
+  if(charts[id])charts[id].destroy();
+  charts[id]=new Chart(document.getElementById(id),{type:"bar",
+    data:{labels,datasets:[{label:lab,data:vals,backgroundColor:color,borderRadius:4}]},
+    options:{indexAxis:axis==="y"?"y":"x",responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{ticks:{callback:function(v){return axis==="y"?'$'+Math.round(v/1000)+'k':this.getLabelForValue(v);}}},
+              y:{ticks:{callback:function(v){return axis==="y"?this.getLabelForValue(v):'$'+Math.round(v/1000)+'k';}}}}}});
+}
+
+function renderAll(){ renderInv(); renderSales(); renderRecords(); }
+renderAll();
+</script>
+</body>
+</html>
